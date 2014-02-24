@@ -1,0 +1,114 @@
+package com.pixelPower.game;
+
+import org.lwjgl.LWJGLException;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.Display;
+import org.lwjgl.opengl.DisplayMode;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.glu.GLU;
+import org.newdawn.slick.opengl.Texture;
+import org.newdawn.slick.opengl.TextureLoader;
+import org.newdawn.slick.util.ResourceLoader;
+
+public class Game {
+	public static final int WIDTH = 800;
+	public static final int HEIGHT = 600;
+	public static final int frameRate = 60;
+	
+	private boolean[] keys = new boolean[128];
+	
+	private Camera camera;
+	
+	private Texture texWhite;
+	private Texture texFloor;
+	
+	public static void main(String[] args) throws LWJGLException {
+		Display.setDisplayMode(new DisplayMode(WIDTH, HEIGHT));
+		Display.create();
+		
+		Game game = new Game();
+		game.initGL();
+		
+		while(!Display.isCloseRequested()){
+			game.render();
+			game.update();
+			Display.update();
+			Display.sync(frameRate);
+		}
+		
+		Display.destroy();
+		System.exit(0);
+	}
+	
+	public Game(){
+		camera = new Camera(this);
+		loadTextures();
+	}
+	
+	private void loadTextures(){
+		try{
+			texWhite = TextureLoader.getTexture("JPG", ResourceLoader.getResourceAsStream("res/white.jpg"));
+			texFloor = TextureLoader.getTexture("JPG", ResourceLoader.getResourceAsStream("res/floor.jpg"));
+		}catch(Exception e){
+			System.err.println("Failed to load texture: ");
+			e.printStackTrace();
+		}
+	}
+	
+	public void render(){
+		clearScreen();
+		camera.translatePostion();
+		
+		//Render a textured rectangular floor at 0,0 to 10,10
+		texFloor.bind();
+		GL11.glBegin(GL11.GL_QUADS);
+		GL11.glTexCoord2f(0, 0);
+		GL11.glVertex3f(0, 0, 0);
+		
+		GL11.glTexCoord2f(1, 0);
+		GL11.glVertex3f(10, 0, 0);
+		
+		GL11.glTexCoord2f(1, 1);
+		GL11.glVertex3f(10, 0, 10);
+		
+		GL11.glTexCoord2f(0, 1);
+		GL11.glVertex3f(0, 0, 10);
+		GL11.glEnd();
+	}
+	
+	public void update(){
+		mapKeys();
+		camera.update();
+		
+	}
+	
+	private void mapKeys(){
+		//Update keys
+		for(int i=0;i<keys.length;i++){
+			keys[i] = Keyboard.isKeyDown(i);
+		}
+	}
+	
+	public void initGL(){
+		//Start 3D Stuff
+		GL11.glMatrixMode(GL11.GL_PROJECTION);
+		GL11.glLoadIdentity();
+
+		GLU.gluPerspective((float) 100, WIDTH / HEIGHT, 0.001f, 1000);
+		GL11.glMatrixMode(GL11.GL_MODELVIEW);
+
+		GL11.glEnable(GL11.GL_TEXTURE_2D);
+		GL11.glShadeModel(GL11.GL_SMOOTH);
+		GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.5f);
+		GL11.glClearDepth(1.0f);
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glDepthFunc(GL11.GL_LEQUAL);
+	}
+	
+	public void clearScreen(){
+		//Clear the screen
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+		GL11.glLoadIdentity();
+	}
+}
+
